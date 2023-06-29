@@ -22,6 +22,12 @@
     <Filter Include="External Files\glad">
       <UniqueIdentifier>{03df8641-57da-45a6-b7cd-23704348a6e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\meshes">
+      <UniqueIdentifier>{4ac4556b-cf77-4133-8581-6c038bbc9e19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\shaders">
+      <UniqueIdentifier>{6cb914dd-0b64-4dc1-826d-c38e43f27313}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,5 +54,39 @@
     <ClCompile Include="..\..\..\..\..\Tools\glad\src\glad.c">
       <Filter>External Files\glad</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tdwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdmaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdshader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdmesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdmeshes.h">
+      <Filter>Header Files\meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="tdobject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdtexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="classes.cd">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="schema.txt" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,17 @@
+all components follow the lifecycle of:
+	start
+	update
+	render
+	end
+
+the materials composition follows:
+object:
+	mesh:
+		VAO
+	material:
+		shader:
+			Shader Program
+		texture:
+			Texture2D
+
+but we are currently directly accessing mesh, shader, and texture

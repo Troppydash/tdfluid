@@ -112,12 +112,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>XCOPY "$(SolutionDir)$(SolutionName)\resources" "$(TargetDir)resources\" /S /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -127,6 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,6 +140,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>XCOPY "$(SolutionDir)$(SolutionName)\resources" "$(TargetDir)resources\" /S /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\Tools\glad\src\glad.c" />
@@ -145,6 +153,22 @@
     <ClCompile Include="..\..\..\..\..\Tools\imgui\imgui-1.89.6\imgui_tables.cpp" />
     <ClCompile Include="..\..\..\..\..\Tools\imgui\imgui-1.89.6\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tdmaterial.h" />
+    <ClInclude Include="tdmesh.h" />
+    <ClInclude Include="tdobject.h" />
+    <ClInclude Include="tdmeshes.h" />
+    <ClInclude Include="tdshader.h" />
+    <ClInclude Include="tdtexture.h" />
+    <ClInclude Include="tdui.h" />
+    <ClInclude Include="tdwindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="classes.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="schema.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

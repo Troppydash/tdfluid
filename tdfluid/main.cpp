@@ -1,76 +1,82 @@
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
-#include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_opengl3.h>
+#include "tdwindow.h"
+#include "tdmesh.h"
+#include "tdshader.h"
+#include "tdtexture.h"
+#include "tdmeshes.h"
 
-void start()
+class fluid_object : public td::window_object
 {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+public:
+	fluid_object() {}
 
-	// create window
-	GLFWwindow *window = glfwCreateWindow(
-		1024,
-		768,
-		"tdfluid",
-		nullptr,
-		nullptr
-	);
-	glfwMakeContextCurrent(window);
-
-	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-
-	glViewport(0, 0, 1024, 768);
-	glfwSwapInterval(1);
-
-	// setup ui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 430");
-
-	while (!glfwWindowShouldClose(window))
+	void start(td::window &window) override
 	{
+		// load mesh, shader, texture
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-
-		// render ui
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
+		// load mesh
+		int position_size = 5 * 4;
+		const float *plane = td_meshes::plane;
+		std::vector<float> positions(plane, plane + position_size);
 		
-		ImGui::Begin("Default Frame");
-		ImGui::Text("Sample Text");
-		ImGui::End();
+		int indices_size = 6;
+		const unsigned int *plane_indices = td_meshes::plane_indices;
+		std::vector<unsigned int> indices(plane_indices, plane_indices + indices_size);
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		m_mesh.load5(positions);
+		m_mesh.load_indices(indices);
 
+		// load texture
+		m_texture.load("resources/textures/nyws.jpg");
 
-		glfwPollEvents();
-		glfwSwapBuffers(window);
+		// load shaders
+		m_shader.load("resources/shaders/vert.glsl", "resources/shaders/frag.glsl");
 	}
 
-	glfwDestroyWindow(window);
-	glfwTerminate();
+	void update(float dt) override
+	{
 
+	}
+
+	void render() override
+	{
+		m_texture.use();
+		m_shader.use();
+		m_mesh.render();
+	}
+
+	void end() override
+	{
+		m_texture.end();
+		m_shader.end();
+		m_mesh.end();
+	}
+
+private:
+	td::mesh m_mesh;
+	td::shader m_shader;
+	td::texture m_texture;
+};
+
+
+void simulation()
+{
+	td::window window;
+
+	fluid_object object;
+	window.include(&object);
+
+	window.start();
+
+	window.main();
+
+	window.end();
 }
-
 
 
 int main(int argc, char *argv)
 {
-
-	start();
-
-
+	simulation();
 	return 0;
 }
