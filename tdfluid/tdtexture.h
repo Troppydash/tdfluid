@@ -16,7 +16,7 @@ namespace td
 	{
 	public:
 		texture() {}
-
+	
 		// Load a RGB image texture
 		texture &load(const char *filename)
 		{
@@ -32,6 +32,9 @@ namespace td
 				&channels,
 				0
 			);
+
+			m_width = width;
+			m_height = height;
 
 			if (!data)
 			{
@@ -63,28 +66,117 @@ namespace td
 			stbi_image_free(data);
 
 			// save id
-			m_textures.push_back(texture);
+			m_texture = texture;
 		}
 
-
-		void use() const
+		texture &load_empty_r32f(int width, int height)
 		{
-			for (int i = 0; i < m_textures.size(); ++i)
+			// generate texture
+			unsigned int data;
+			glGenTextures(1, &data);
+
+			// activate the texture
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, data);
+
+			// this shouldnt be needed
+			// for we are using an image
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+			// zero the texture image data
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, nullptr);
+
+			m_texture = data;
+			m_width = width;
+			m_height = height;
+			
+			return *this;
+		}
+
+		texture &load_empty_rg32f(int width, int height)
+		{
+			// generate texture
+			unsigned int data;
+			glGenTextures(1, &data);
+
+			// activate the texture
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, data);
+
+			// this shouldnt be needed
+			// for we are using an image
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+			// zero the texture image data
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RED, GL_FLOAT, nullptr);
+
+			m_texture = data;
+			m_width = width;
+			m_height = height;
+
+			return *this;
+		}
+
+		void use(int offset = 0) const
+		{
+			glActiveTexture(GL_TEXTURE0 + offset);
+			glBindTexture(GL_TEXTURE_2D, m_texture);
+		}
+
+		template <unsigned int Components = 1>
+		void use_image(int offset = 0) const
+		{
+			int format;
+			switch (Components)
 			{
-				glActiveTexture(GL_TEXTURE0 + i);
-				glBindTexture(GL_TEXTURE_2D, m_textures[i]);
+			case 1:
+				format = GL_R32F;
+				break;
+			case 2:
+				format = GL_RG32F;
+				break;
+			default:
+				throw std::runtime_error("unknown use_image Component");
 			}
+
+			// bind texture to the m_offset image texture slot
+			glBindImageTexture(offset, m_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
 		}
 
 		void end()
 		{
-			for (auto &texture : m_textures)
-			{
-				glDeleteTextures(1, &texture);
-			}
+			glDeleteTextures(1, &m_texture);
 		}
 
+		void upload_r32f(const std::vector<float> &data)
+		{
+			// sanity check
+			if (data.size() != m_width * m_height)
+			{
+				throw std::runtime_error("compute data size mismatch");
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_texture);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_width, m_height, 0, GL_RED, GL_FLOAT, data.data());
+		}
+
+		int get_width() const
+		{
+			return m_width;
+		}
+
+		int get_height() const
+		{
+			return m_height;
+		}
+ 
 	private:
-		std::vector<unsigned int> m_textures;
+		unsigned int m_texture = -1;
+		int m_width = -1;
+		int m_height = -1;
 	};
 }

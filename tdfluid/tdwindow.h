@@ -60,7 +60,7 @@ namespace td
 
 			gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-			glViewport(0, 0, 1024, 768);
+			glViewport(0, 0, m_settings.width, m_settings.height);
 			glfwSwapInterval(1);
 
 			for (auto &object : m_objects)
@@ -109,10 +109,15 @@ namespace td
 			glfwTerminate();
 		}
 
+		GLFWwindow *get_window()
+		{
+			return m_window;
+		}
+
 	private:
 		window_settings m_settings = {
-			1024,
-			768,
+			1000,
+			1000,
 			"tdfluid"
 		};
 

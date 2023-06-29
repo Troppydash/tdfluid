@@ -9,7 +9,7 @@
 #include "tdtexture.h"
 
 
-static std::string readFile(const char *filename)
+static std::string read_file(const char *filename)
 {
 	std::ifstream file(filename);
 	if (!file.is_open())
@@ -37,12 +37,58 @@ namespace td
 	class shader
 	{
 	public:
-		shader() {};
+		virtual void use() const = 0;
+		virtual void end() = 0;
 
-		shader &load(const char *vertex_file, const char *fragment_file)
+
+		void set_uniform_scalar(const char *name, float data)
 		{
-			std::string vertex = readFile(vertex_file);
-			std::string fragment = readFile(fragment_file);
+			int location = find_uniform(name);
+
+			use();
+			glUniform1f(location, data);
+		}
+
+		template <unsigned int N = 4>
+		void set_uniform_matrix(const char *name, const float *data)
+		{
+			int location = find_uniform(name);
+
+			use();
+			switch (N)
+			{
+			case 4:
+				glUniformMatrix4fv(location, 1, GL_FALSE, data);
+			default:
+				std::cout << "Shader: Unable to set the uniform of a matrix with size outside [1, 4]" << std::endl;
+				throw std::runtime_error("");
+			}
+		}
+
+	protected:
+		int find_uniform(const char *name) const
+		{
+			int location = glGetUniformLocation(m_program, name);
+			if (location == -1)
+			{
+				std::cout << "Failed to find the shader uniform location: " << name << std::endl;
+				throw std::runtime_error("");
+			}
+			return location;
+		}
+
+		unsigned int m_program = 0;
+	};
+
+	class graphics_shader : public shader
+	{
+	public:
+		graphics_shader() {};
+
+		graphics_shader &load(const char *vertex_file, const char *fragment_file)
+		{
+			std::string vertex = read_file(vertex_file);
+			std::string fragment = read_file(fragment_file);
 
 			const char *vertexSource = vertex.c_str();
 			const char *fragmentSource = fragment.c_str();
@@ -101,59 +147,85 @@ namespace td
 			return *this;
 		}
 
-		void use() const
+		void use() const override
 		{
 			glUseProgram(m_program);
 		}
 
-		void set_uniform_scalar(const char *name, float data)
+		void end() override
 		{
-			int location = find_uniform(name);
-
-			use();
-			glUniform1f(location, data);
+			glDeleteProgram(m_program);
 		}
+	};
 
-		template <unsigned int N = 4>
-		void set_uniform_matrix(const char *name, const float *data)
+
+	class compute_shader : public shader
+	{
+	public:
+		compute_shader()
+		{}
+
+		void load(const char *compute_file, int width, int height)
 		{
-			int location = find_uniform(name);
+			m_width = width;
+			m_height = height;
 
-			use();
-			switch (N)
+			std::string content = read_file(compute_file);
+			const char *source = content.c_str();
+
+			// create shader
+			unsigned int shader = glCreateShader(GL_COMPUTE_SHADER);
+			glShaderSource(shader, 1, &source, nullptr);
+			glCompileShader(shader);
+
+			// check compile status
+			int success;
+			char infoLog[512];
+
+			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+			if (!success)
 			{
-			case 4:
-				glUniformMatrix4fv(location, 1, GL_FALSE, data);
-			default:
-				std::cout << "Shader: Unable to set the uniform of a matrix with size outside [1, 4]" << std::endl;
-				throw std::runtime_error("");
+				glGetShaderInfoLog(shader, 512, nullptr, infoLog);
+
+				std::cout << "Failed to create the compute shader:\n" << infoLog << std::endl;
+				throw std::runtime_error("Compute shader compile error");
 			}
+
+			m_program = glCreateProgram();
+			glAttachShader(m_program, shader);
+			glLinkProgram(m_program);
+
+			// check link status
+			glGetProgramiv(m_program, GL_LINK_STATUS, &success);
+			if (!success)
+			{
+				glGetProgramInfoLog(m_program, 512, nullptr, infoLog);
+
+				std::cout << "Failed to link the compute program:\n" << infoLog << std::endl;
+				throw std::runtime_error("Compute program link error");
+			}
+
+			glDeleteShader(shader);
 		}
 
-		void end()
+		void use() const override
+		{
+			glUseProgram(m_program);
+		}
+
+		void end() override
 		{
 			glDeleteProgram(m_program);
 		}
 
-	private:
-		int find_uniform(const char *name) const
+		void execute()
 		{
-			int location = glGetUniformLocation(m_program, name);
-			if (location == -1)
-			{
-				std::cout << "Failed to find the shader uniform location: " << name << std::endl;
-				throw std::runtime_error("");
-			}
-			return location;
+			glDispatchCompute(m_width, m_height, 1);
+			glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		}
 
 	private:
-		unsigned int m_program = -1;
-	};
-
-
-	class compute_shader
-	{
-
+		int m_width = -1;
+		int m_height = -1;
 	};
 }
