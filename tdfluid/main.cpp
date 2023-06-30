@@ -37,9 +37,16 @@ public:
 		m_divergence.load("resources/shaders/divergence.glsl", m_width, m_height);
 		m_project.load("resources/shaders/project.glsl", m_width, m_height);
 		m_advect.load("resources/shaders/advect.glsl", m_width, m_height);
+		m_static_boundary.load("resources/shaders/static_boundary.glsl", m_width, m_height);
+
+		m_copy_rg.load("resources/shaders/copy_rg.glsl", m_width, m_height);
+		m_merge_rg.load("resources/shaders/merge_rg.glsl", m_width, m_height);
+
+		m_advect_rg.load("resources/shaders/advect_rg.glsl", m_width, m_height);
 
 		// load textures
 		m_velocity.load_empty_rg32f(m_width, m_height);
+		m_velocity_source.load_empty_rg32f(m_width, m_height);
 		m_velocity_buffer.load_empty_rg32f(m_width, m_height);
 		m_velocity_divergence.load_empty_r32f(m_width, m_height);
 
@@ -52,6 +59,7 @@ public:
 		m_density_source.load_empty_r32f(m_width, m_height);
 
 		m_mask.load_empty_r32f(m_width, m_height);
+		m_normal.load_empty_rg32f(m_width, m_height);
 
 		initialize();
 	}
@@ -62,22 +70,31 @@ public:
 		// fuck it this looks right
 
 		// add source
+		//if (((float)rand() / RAND_MAX) > 0.9f)
 		run_merge(m_density_source, m_density);
+		
+		run_merge_rg(m_velocity_source, m_velocity);
 
 		// recalculate normals and rebake mask
 		// TODO
 
 		// boundary conditions
-		run_boundary();
 
 		// run projection
-		run_projection();
+		for (int i = 0; i < (m_first ? 70 : 10); ++i)
+		{
+			run_boundary();
+			run_projection();
+		}
 
 		// run diffusion
 		run_diffusion(dt);
 
 		// run advection
 		run_advection(dt);
+
+
+		m_first = false;
 	}
 
 	void render() override
@@ -99,25 +116,15 @@ public:
 	{
 		// center blob in density
 		std::vector<float> buffer;
-		for (int y = m_height - 1; y >= 0; --y)
+		for (int y = 0; y < m_height; ++y)
 		{
 			for (int x = 0; x < m_width; ++x)
 			{
 				float value = 0.0f;
-				if (powf(x - 400, 2) + powf(y - 500, 2) < 25 * 25)
-				{
-					value = 1.0f;
-				}
-
-				if (powf(x - 600, 2) + powf(y - 500, 2) < 25 * 25)
-				{
-					value = 1.0f;
-				}
-
-				//if ((x - 500) == (y - 500) || (x - 500) == -(y - 500))
-				//{
-				//	value = 1.0f;
-				//}
+				if (abs(y - 123.0) <= 2.0 && x < 5.0f)
+					value = 2.2f;
+				if (abs(x - 123.0) <= 2.0 && y < 5.0f)
+					value = 1.5f;
 				buffer.push_back(value);
 			}
 		}
@@ -126,7 +133,7 @@ public:
 
 		// border with mask
 		buffer.clear();
-		for (int y = m_height - 1; y >= 0; --y)
+		for (int y = 0; y < m_height; ++y)
 		{
 			for (int x = 0; x < m_width; ++x)
 			{
@@ -140,7 +147,48 @@ public:
 		}
 		m_mask.upload_r32f(buffer);
 
-		// TODO: Compute normals
+		// compute normals for border
+		buffer.clear();
+		for (int y = 0; y < m_height; ++y)
+		{
+			for (int x = 0; x < m_width; ++x)
+			{
+				float nx = 0.0f;
+				float ny = 0.0f;
+				if (x == 0)
+				{
+					nx = 1.0f;
+				}
+				if (x == m_width - 1)
+				{
+					nx = -1.0f;
+				}
+				if (y == 0)
+				{
+					ny = 1.0f;
+				}
+				if (y == m_height - 1)
+				{
+					ny = -1.0f;
+				}
+
+				// normalize
+				float length = sqrt(powf(nx, 2) + powf(ny, 2));
+				if (length < 0.01f)
+				{
+					// zero normal
+					buffer.push_back(0.0f);
+					buffer.push_back(0.0f);
+				}
+				else
+				{
+					// normalized normal
+					buffer.push_back(nx);
+					buffer.push_back(ny);
+				}
+			}
+		}
+		m_normal.upload_rg32f(buffer);
 
 
 		// zeroing the pressure
@@ -157,23 +205,30 @@ public:
 
 		// velocity
 		buffer.clear();
-		for (int y = m_height - 1; y >= 0; --y)
+		for (int y = 0; y < m_height; ++y)
 		{
 			for (int x = 0; x < m_width; ++x)
 			{
 				// velocity of [1.0, 0.0]
-				if (x > 500)
+				if (abs(y - 123.0f) < 5.0f && x < 10.0f)
 				{
-					buffer.push_back(-100.0f);
+					buffer.push_back(150.0f);
+					buffer.push_back(0.0f);
+				}
+				else if (abs(x - 123.0f) < 5.0f && y < 10.0f)
+				{
+					buffer.push_back(0.0f);
+					buffer.push_back(150.0f);
 				}
 				else
 				{
-					buffer.push_back(100.0f);
+					buffer.push_back(0.0f);
+					buffer.push_back(0.0f);
 				}
-				buffer.push_back(0.0f);
 			}
 		}
 		m_velocity.upload_rg32f(buffer);
+		m_velocity_source.upload_rg32f(buffer);
 	}
 
 	void run_merge(td::texture &from, td::texture &to)
@@ -185,6 +240,15 @@ public:
 		m_merge.execute();
 	}
 
+	void run_merge_rg(td::texture &from, td::texture &to)
+	{
+		from.use_image<2>(0);
+		to.use_image<2>(1);
+
+		m_merge_rg.use();
+		m_merge_rg.execute();
+	}
+
 	void run_copy(td::texture &from, td::texture &to)
 	{
 		from.use_image(0);
@@ -192,6 +256,15 @@ public:
 
 		m_copy.use();
 		m_copy.execute();
+	}
+
+	void run_copy_rg(td::texture &from, td::texture &to)
+	{
+		from.use_image<2>(0);
+		to.use_image<2>(1);
+
+		m_copy_rg.use();
+		m_copy_rg.execute();
 	}
 
 	void run_diffusion(float dt)
@@ -219,7 +292,7 @@ public:
 		m_jacobi.set_uniform_scalar("c", c);
 
 		// iterate
-		for (int i = 0; i < 3; ++i)
+		for (int i = 0; i < 10; ++i)
 		{
 			m_jacobi.use();
 			m_jacobi.execute();
@@ -246,6 +319,9 @@ public:
 		float b = 1.0f;
 		float c = -1.0f;
 
+		// warm start the pressure buffer
+		// run_copy(m_pressure, m_pressure_buffer);
+
 		m_pressure.use_image(0);
 		m_pressure_buffer.use_image(1);
 		m_velocity_divergence.use_image(2);
@@ -255,16 +331,21 @@ public:
 		m_jacobi.set_uniform_scalar("b", b);
 		m_jacobi.set_uniform_scalar("c", c);
 
-		for (int i = 0; i < 3; ++i)
+		int seesaw = 0;
+		for (int i = 0; i < 10; ++i)
 		{
 			m_jacobi.use();
 			m_jacobi.execute();
 
-			run_copy(m_pressure_buffer, m_pressure);
+			// toggle buffers
+			// run_copy(m_pressure_buffer, m_pressure);
+			m_pressure.use_image(1 - seesaw);
+			m_pressure_buffer.use_image(seesaw);
+			seesaw = 1 - seesaw;
 		}
 
 		// we now have m_pressure set to the correct pressure
-
+		//return;
 		// update velocity
 		m_pressure.use_image(0);
 		m_velocity.use_image<2>(1);
@@ -289,16 +370,46 @@ public:
 		m_advect.execute();
 
 		run_copy(m_density_buffer, m_density);
+
+		// also advect the velocity
+		m_velocity.use_image<2>(0);
+		m_velocity_buffer.use_image<2>(1);
+		m_mask.use_image(2);
+
+		m_advect_rg.set_uniform_scalar("dt", dt);
+
+		m_advect_rg.use();
+		m_advect_rg.execute();
+
+		run_copy_rg(m_velocity_buffer, m_velocity);
 	}
 
 	void run_boundary()
 	{
 		// boundary conditions on velocity, pressure, and density
+		m_velocity.use_image<2>(0);
+		m_velocity_buffer.use_image<2>(1);
+
+		m_pressure.use_image(2);
+		m_pressure_buffer.use_image(3);
+
+		m_density.use_image(4);
+
+		m_normal.use_image<2>(5);
+		m_mask.use_image(6);
+
+		m_static_boundary.use();
+		m_static_boundary.execute();
+
+		// copy buffers
+		run_copy_rg(m_velocity_buffer, m_velocity);
+		run_copy(m_pressure_buffer, m_pressure);
 	}
+
 private:
 	// settings
-	int m_width = 1000;
-	int m_height = 1000;
+	int m_width = 256;
+	int m_height = 256;
 
 	float m_diffusion_rate = 1000.0f;
 
@@ -308,13 +419,18 @@ private:
 	td::graphics_shader m_shader;
 	td::compute_shader m_jacobi;
 	td::compute_shader m_copy;
+	td::compute_shader m_copy_rg;
 	td::compute_shader m_merge;
 	td::compute_shader m_divergence;
 	td::compute_shader m_project;
 	td::compute_shader m_advect;
+	td::compute_shader m_static_boundary;
+	td::compute_shader m_merge_rg;
+	td::compute_shader m_advect_rg;
 
 	// texture buffers
 	td::texture m_velocity;
+	td::texture m_velocity_source;
 	td::texture m_velocity_buffer;
 	td::texture m_velocity_divergence;
 
@@ -330,7 +446,10 @@ private:
 	// the target density field (source)
 	td::texture m_density_source;
 
+	td::texture m_normal;
 	td::texture m_mask;
+
+	bool m_first = true;
 };
 
 

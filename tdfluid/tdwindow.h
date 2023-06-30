@@ -61,7 +61,9 @@ namespace td
 			gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
 			glViewport(0, 0, m_settings.width, m_settings.height);
-			glfwSwapInterval(1);
+			//glfwSwapInterval(1);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			for (auto &object : m_objects)
 			{
@@ -116,8 +118,8 @@ namespace td
 
 	private:
 		window_settings m_settings = {
-			1000,
-			1000,
+			750,
+			750,
 			"tdfluid"
 		};
 

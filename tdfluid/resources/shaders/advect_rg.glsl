@@ -13,13 +13,10 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 // the velocity field
 layout (binding = 0, rg32f) uniform image2D uni_velocity;
 
-// the density field
-layout (binding = 1, r32f) uniform image2D uni_density;
-
 // the output, advected density field
-layout (binding = 2, r32f) uniform image2D uni_buffer;
+layout (binding = 1, rg32f) uniform image2D uni_buffer;
 
-layout (binding = 3, r32f) uniform image2D uni_mask;
+layout (binding = 2, r32f) uniform image2D uni_mask;
 
 // delta time
 uniform float dt;
@@ -47,15 +44,15 @@ void main()
 
     // [a, b]
     // [c, d]
-    float a = imageLoad(uni_density, ivec2(i, j+1)).r;
-    float b = imageLoad(uni_density, ivec2(i+1, j+1)).r;
-    float c = imageLoad(uni_density, ivec2(i, j)).r;
-    float d = imageLoad(uni_density, ivec2(i+1, j)).r;
+    vec2 a = imageLoad(uni_velocity, ivec2(i, j+1)).rg;
+    vec2 b = imageLoad(uni_velocity, ivec2(i+1, j+1)).rg;
+    vec2 c = imageLoad(uni_velocity, ivec2(i, j)).rg;
+    vec2 d = imageLoad(uni_velocity, ivec2(i+1, j)).rg;
     
-    float top = (a + (b-a) * delta.x);
-    float bottom = (c + (d-c) * delta.x);
+    vec2 top = (a + (b-a) * delta.x);
+    vec2 bottom = (c + (d-c) * delta.x);
 
-    float interpolated = bottom + (top - bottom) * delta.y;
-    imageStore(uni_buffer, ij, vec4(interpolated, 0.0, 0.0, 0.0));
+    vec2 interpolated = bottom + (top - bottom) * delta.y;
+    imageStore(uni_buffer, ij, vec4(interpolated, 0.0, 0.0));
 }
 

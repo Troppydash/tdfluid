@@ -36,7 +36,7 @@ void main()
     float dy = imageLoad(uni_pressure, ivec2(i,j+1)).r - imageLoad(uni_pressure, ivec2(i,j-1)).r;
 
     // subtract pressure gradient from velocity field
-    vec2 new_velocity = imageLoad(uni_velocity, ij).rg - vec2(dx, dy);
+    vec2 new_velocity = imageLoad(uni_velocity, ij).rg - vec2(dx, dy) / 2;
     imageStore(uni_velocity, ij, vec4(new_velocity, 0.0, 0.0));
 }
 

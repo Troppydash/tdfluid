@@ -26,10 +26,11 @@ void main()
 
     float brightness = texture(uni_texture, in_tex).r;
 
-    if (brightness < 0.01) {
-        discard;
-    }
-
+     if (brightness < 0.01) {
+         discard;
+     }
+    //out_color = vec4(brightness, brightness, brightness, 1.0);
+    //return;
     vec3 color = rainbow(brightness);
-    out_color = vec4(color, 1.0);
+    out_color = vec4(color, brightness);
 }
