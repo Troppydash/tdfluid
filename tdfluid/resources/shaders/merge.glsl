@@ -23,7 +23,7 @@ void main()
     float value = imageLoad(uni_from, ij).r;
     if (value > 0.01)
     {
-        imageStore(uni_to, ij, vec4(value, 0.0, 0.0, 1.0));
+        imageStore(uni_to, ij, vec4(value, 0.0, 0.0, 0.0));
     }
 }
 

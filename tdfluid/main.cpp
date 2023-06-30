@@ -34,8 +34,15 @@ public:
 		m_jacobi.load("resources/shaders/jacobi.glsl", m_width, m_height);
 		m_copy.load("resources/shaders/copy.glsl", m_width, m_height);
 		m_merge.load("resources/shaders/merge.glsl", m_width, m_height);
+		m_divergence.load("resources/shaders/divergence.glsl", m_width, m_height);
+		m_project.load("resources/shaders/project.glsl", m_width, m_height);
+		m_advect.load("resources/shaders/advect.glsl", m_width, m_height);
 
 		// load textures
+		m_velocity.load_empty_rg32f(m_width, m_height);
+		m_velocity_buffer.load_empty_rg32f(m_width, m_height);
+		m_velocity_divergence.load_empty_r32f(m_width, m_height);
+
 		m_pressure.load_empty_r32f(m_width, m_height);
 		m_pressure_buffer.load_empty_r32f(m_width, m_height);
 
@@ -46,44 +53,7 @@ public:
 
 		m_mask.load_empty_r32f(m_width, m_height);
 
-
-		// center blob in density
-		std::vector<float> buffer;
-		for (int x = 0; x < m_width; ++x)
-		{
-			for (int y = 0; y < m_height; ++y)
-			{
-				float value = 0.0f;
-				/*if ((x - 250) * (x - 250) + (y - 250) * (y - 250) < 25 * 25)
-				{
-					value = 1.0f;
-				}*/
-				if ((x-500) == (y- 500) || (x- 500) == -(y- 500))
-				{
-					value = 1.0f;
-				}
-				buffer.push_back(value);
-			}
-		}
-		m_density.upload_r32f(buffer);
-		m_density_source.upload_r32f(buffer);
-
-		// border with mask
-		buffer.clear();
-		for (int x = 0; x < m_width; ++x)
-		{
-			for (int y = 0; y < m_height; ++y)
-			{
-				float value = 0.0f;
-				if (x == 0 || y == 0 || x == m_width - 1 || y == m_height - 1)
-				{
-					value = 1.0f;
-				}
-				buffer.push_back(value);
-			}
-		}
-		m_mask.upload_r32f(buffer);
-
+		initialize();
 	}
 
 
@@ -98,16 +68,16 @@ public:
 		// TODO
 
 		// boundary conditions
-		// TODO
+		run_boundary();
 
 		// run projection
-		// TODO
+		run_projection();
 
 		// run diffusion
 		run_diffusion(dt);
 
 		// run advection
-		// TODO
+		run_advection(dt);
 	}
 
 	void render() override
@@ -124,6 +94,87 @@ public:
 	}
 
 	/// FLUID DYNAMICS ALGORITHMS ///
+
+	void initialize()
+	{
+		// center blob in density
+		std::vector<float> buffer;
+		for (int y = m_height - 1; y >= 0; --y)
+		{
+			for (int x = 0; x < m_width; ++x)
+			{
+				float value = 0.0f;
+				if (powf(x - 400, 2) + powf(y - 500, 2) < 25 * 25)
+				{
+					value = 1.0f;
+				}
+
+				if (powf(x - 600, 2) + powf(y - 500, 2) < 25 * 25)
+				{
+					value = 1.0f;
+				}
+
+				//if ((x - 500) == (y - 500) || (x - 500) == -(y - 500))
+				//{
+				//	value = 1.0f;
+				//}
+				buffer.push_back(value);
+			}
+		}
+		m_density.upload_r32f(buffer);
+		m_density_source.upload_r32f(buffer);
+
+		// border with mask
+		buffer.clear();
+		for (int y = m_height - 1; y >= 0; --y)
+		{
+			for (int x = 0; x < m_width; ++x)
+			{
+				float value = 0.0f;
+				if (x == 0 || y == 0 || x == m_width - 1 || y == m_height - 1)
+				{
+					value = 1.0f;
+				}
+				buffer.push_back(value);
+			}
+		}
+		m_mask.upload_r32f(buffer);
+
+		// TODO: Compute normals
+
+
+		// zeroing the pressure
+		buffer.clear();
+		for (int y = m_height - 1; y >= 0; --y)
+		{
+			for (int x = 0; x < m_width; ++x)
+			{
+				buffer.push_back(0.0f);
+			}
+		}
+		m_pressure.upload_r32f(buffer);
+
+
+		// velocity
+		buffer.clear();
+		for (int y = m_height - 1; y >= 0; --y)
+		{
+			for (int x = 0; x < m_width; ++x)
+			{
+				// velocity of [1.0, 0.0]
+				if (x > 500)
+				{
+					buffer.push_back(-100.0f);
+				}
+				else
+				{
+					buffer.push_back(100.0f);
+				}
+				buffer.push_back(0.0f);
+			}
+		}
+		m_velocity.upload_rg32f(buffer);
+	}
 
 	void run_merge(td::texture &from, td::texture &to)
 	{
@@ -168,7 +219,7 @@ public:
 		m_jacobi.set_uniform_scalar("c", c);
 
 		// iterate
-		for (int i = 0; i < 5; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			m_jacobi.use();
 			m_jacobi.execute();
@@ -182,13 +233,68 @@ public:
 
 	void run_projection()
 	{
-		// compute pressure field
-		float a = 1 / 4;
-		float b = 1;
-		float c = -1;
+		// compute div V
+		m_velocity_divergence.use_image(0);
+		m_velocity.use_image<2>(1);
+		m_mask.use_image(2);
 
+		m_divergence.use();
+		m_divergence.execute();
+
+		// compute pressure field
+		float a = 1.0f / 4.0f;
+		float b = 1.0f;
+		float c = -1.0f;
+
+		m_pressure.use_image(0);
+		m_pressure_buffer.use_image(1);
+		m_velocity_divergence.use_image(2);
+		m_mask.use_image(3);
+
+		m_jacobi.set_uniform_scalar("a", a);
+		m_jacobi.set_uniform_scalar("b", b);
+		m_jacobi.set_uniform_scalar("c", c);
+
+		for (int i = 0; i < 3; ++i)
+		{
+			m_jacobi.use();
+			m_jacobi.execute();
+
+			run_copy(m_pressure_buffer, m_pressure);
+		}
+
+		// we now have m_pressure set to the correct pressure
+
+		// update velocity
+		m_pressure.use_image(0);
+		m_velocity.use_image<2>(1);
+		m_mask.use_image(2);
+
+		m_project.use();
+		m_project.execute();
+
+		// m_velocity is then updated
 	}
 
+	void run_advection(float dt)
+	{
+		m_velocity.use_image<2>(0);
+		m_density.use_image(1);
+		m_density_buffer.use_image(2);
+		m_mask.use_image(3);
+
+		m_advect.set_uniform_scalar("dt", dt);
+
+		m_advect.use();
+		m_advect.execute();
+
+		run_copy(m_density_buffer, m_density);
+	}
+
+	void run_boundary()
+	{
+		// boundary conditions on velocity, pressure, and density
+	}
 private:
 	// settings
 	int m_width = 1000;
@@ -203,6 +309,14 @@ private:
 	td::compute_shader m_jacobi;
 	td::compute_shader m_copy;
 	td::compute_shader m_merge;
+	td::compute_shader m_divergence;
+	td::compute_shader m_project;
+	td::compute_shader m_advect;
+
+	// texture buffers
+	td::texture m_velocity;
+	td::texture m_velocity_buffer;
+	td::texture m_velocity_divergence;
 
 	td::texture m_pressure;
 	td::texture m_pressure_buffer;
@@ -217,8 +331,6 @@ private:
 	td::texture m_density_source;
 
 	td::texture m_mask;
-
-
 };
 
 

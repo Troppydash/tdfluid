@@ -47,6 +47,6 @@ void main()
     float w = imageLoad(uni_field_W, ij).r;
 
     float result = a * (b * (left + right + bottom + top) + c * w);
-    imageStore(uni_buffer, ij, vec4(result, 0.0, 0.0, 1.0));
+    imageStore(uni_buffer, ij, vec4(result, 0.0, 0.0, 0.0));
 }
 

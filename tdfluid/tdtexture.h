@@ -142,7 +142,7 @@ namespace td
 			}
 
 			// bind texture to the m_offset image texture slot
-			glBindImageTexture(offset, m_texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+			glBindImageTexture(offset, m_texture, 0, GL_FALSE, 0, GL_READ_WRITE, format);
 		}
 
 		void end()
@@ -162,6 +162,21 @@ namespace td
 			glBindTexture(GL_TEXTURE_2D, m_texture);
 
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_width, m_height, 0, GL_RED, GL_FLOAT, data.data());
+		}
+
+		void upload_rg32f(const std::vector<float> &data)
+		{
+			// sanity check
+			if (data.size() / 2 != m_width * m_height)
+			{
+				throw std::runtime_error("compute data size mismatch");
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_texture);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, m_width, m_height, 0, GL_RG, GL_FLOAT, data.data());
 		}
 
 		int get_width() const

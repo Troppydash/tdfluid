@@ -19,6 +19,11 @@ vec3 rainbow(float level)
 
 void main()
 {
+    
+    // vec2 velocity = texture(uni_texture, in_tex).rg;
+    // out_color = vec4(velocity, 0.0, 1.0);
+    // return;
+
     float brightness = texture(uni_texture, in_tex).r;
 
     if (brightness < 0.01) {
