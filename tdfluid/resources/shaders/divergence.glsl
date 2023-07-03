@@ -35,6 +35,6 @@ void main()
     float vert = imageLoad(uni_field_V, ivec2(i,j+1)).g - imageLoad(uni_field_V, ivec2(i,j-1)).g;
 
     float div = hori + vert;
-    imageStore(uni_buffer, ij, vec4(-div * 1.1, 0.0, 0.0, 0.0));
+    imageStore(uni_buffer, ij, vec4(-div, 0.0, 0.0, 0.0));
 }
 

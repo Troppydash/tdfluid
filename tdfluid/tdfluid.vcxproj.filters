@@ -62,9 +62,6 @@
     <ClInclude Include="tdui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tdmaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="tdshader.h">
       <Filter>Header Files</Filter>
     </ClInclude>

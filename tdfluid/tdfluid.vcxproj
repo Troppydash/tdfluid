@@ -155,7 +155,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tdmaterial.h" />
     <ClInclude Include="tdmesh.h" />
     <ClInclude Include="tdobject.h" />
     <ClInclude Include="tdmeshes.h" />

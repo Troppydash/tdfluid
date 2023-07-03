@@ -39,7 +39,7 @@ void main()
     }
 
     vec2 normal = imageLoad(uni_normals, ij).rg;
-    vec2 target = vec2(ij) + normal;
+    vec2 target = vec2(ij) + normal / length(normal);
     vec2 anchor = floor(target);
     vec2 delta = target - anchor;
 

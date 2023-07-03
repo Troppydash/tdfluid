@@ -21,7 +21,7 @@ void main()
     ivec2 ij = ivec2(gl_GlobalInvocationID.xy);
 
     vec2 value = imageLoad(uni_from, ij).rg;
-    if (length(value) > 0.01)
+    if (length(value) > 0.1)
     {
         imageStore(uni_to, ij, vec4(value, 0.0, 0.0));
     }
