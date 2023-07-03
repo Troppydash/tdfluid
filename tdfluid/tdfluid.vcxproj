@@ -165,6 +165,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="classes.cd" />
+    <None Include="resources\shaders\advect.glsl" />
+    <None Include="resources\shaders\advect_rg.glsl" />
+    <None Include="resources\shaders\copy.glsl" />
+    <None Include="resources\shaders\copy_rg.glsl" />
+    <None Include="resources\shaders\divergence.glsl" />
+    <None Include="resources\shaders\frag.glsl" />
+    <None Include="resources\shaders\jacobi.glsl" />
+    <None Include="resources\shaders\merge.glsl" />
+    <None Include="resources\shaders\merge_rg.glsl" />
+    <None Include="resources\shaders\project.glsl" />
+    <None Include="resources\shaders\static_boundary.glsl" />
+    <None Include="resources\shaders\vert.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="schema.txt" />

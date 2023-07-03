@@ -125,6 +125,32 @@ namespace td
 		{
 			m_shader.end();
 			m_mesh.end();
+
+			m_jacobi.end();
+			m_copy.end();
+			m_copy_rg.end();
+			m_merge.end();
+			m_merge_rg.end();
+			m_divergence.end();
+			m_project.end();
+			m_advect.end();
+			m_static_boundary.end();
+			m_advect_rg.end();
+
+			m_velocity.end();
+			m_velocity_source.end();
+			m_velocity_buffer.end();
+			m_velocity_divergence.end();
+
+			m_pressure.end();
+			m_pressure_buffer.end();
+			m_density.end();
+			m_density_buffer.end();
+			m_density_last.end();
+			m_density_source.end();
+
+			m_normal.end();
+			m_mask.end();
 		}
 
 		void add_object(td::fluid_static_boundary *object)
