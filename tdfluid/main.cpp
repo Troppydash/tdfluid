@@ -39,6 +39,7 @@ public:
 		m_advect.load("resources/shaders/advect.glsl", m_width, m_height);
 		m_static_boundary.load("resources/shaders/static_boundary.glsl", m_width, m_height);
 
+
 		m_copy_rg.load("resources/shaders/copy_rg.glsl", m_width, m_height);
 		m_merge_rg.load("resources/shaders/merge_rg.glsl", m_width, m_height);
 
@@ -81,7 +82,7 @@ public:
 		// boundary conditions
 
 		// run projection
-		for (int i = 0; i < (m_first ? 70 : 10); ++i)
+		for (int i = 0; i < (m_first ? 70 : 6); ++i)
 		{
 			run_boundary();
 			run_projection();
@@ -122,7 +123,7 @@ public:
 			{
 				float value = 0.0f;
 				if (abs(y - 123.0) <= 2.0 && x < 5.0f)
-					value = 2.2f;
+					value = 1.2f;
 				if (abs(x - 123.0) <= 2.0 && y < 5.0f)
 					value = 1.5f;
 				buffer.push_back(value);
@@ -212,7 +213,7 @@ public:
 				// velocity of [1.0, 0.0]
 				if (abs(y - 123.0f) < 5.0f && x < 10.0f)
 				{
-					buffer.push_back(150.0f);
+					buffer.push_back(550.0f);
 					buffer.push_back(0.0f);
 				}
 				else if (abs(x - 123.0f) < 5.0f && y < 10.0f)
@@ -289,16 +290,19 @@ public:
 		// jacobi cosntants
 		m_jacobi.set_uniform_scalar("a", a);
 		m_jacobi.set_uniform_scalar("b", b);
-		m_jacobi.set_uniform_scalar("c", c);
 
 		// iterate
-		for (int i = 0; i < 10; ++i)
+		int seesaw = 0;
+		for (int i = 0; i < 6; ++i)
 		{
 			m_jacobi.use();
 			m_jacobi.execute();
 
 			// copy buffer to density
-			run_copy(m_density_buffer, m_density);
+			m_density.use_image(1-seesaw);
+			m_density_buffer.use_image(seesaw);
+			seesaw = 1 - seesaw;
+			//run_copy(m_density_buffer, m_density);
 		}
 
 		// now m_density contains the new diffused density
@@ -329,10 +333,9 @@ public:
 
 		m_jacobi.set_uniform_scalar("a", a);
 		m_jacobi.set_uniform_scalar("b", b);
-		m_jacobi.set_uniform_scalar("c", c);
 
 		int seesaw = 0;
-		for (int i = 0; i < 10; ++i)
+		for (int i = 0; i < 8; ++i)
 		{
 			m_jacobi.use();
 			m_jacobi.execute();
@@ -408,10 +411,10 @@ public:
 
 private:
 	// settings
-	int m_width = 256;
-	int m_height = 256;
+	int m_width = 1024;
+	int m_height = 1024;
 
-	float m_diffusion_rate = 1000.0f;
+	float m_diffusion_rate = 200.0f;
 
 	// references
 	td::mesh m_mesh;

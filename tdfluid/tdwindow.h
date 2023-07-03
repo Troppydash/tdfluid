@@ -61,7 +61,7 @@ namespace td
 			gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
 			glViewport(0, 0, m_settings.width, m_settings.height);
-			//glfwSwapInterval(1);
+			glfwSwapInterval(0);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

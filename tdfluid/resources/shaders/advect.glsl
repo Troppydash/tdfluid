@@ -8,7 +8,7 @@
 // in uint gl_LocalInvocationIndex;
 
 // a workgroup for each pixel
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 // the velocity field
 layout (binding = 0, rg32f) uniform image2D uni_velocity;

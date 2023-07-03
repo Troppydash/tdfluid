@@ -4,6 +4,7 @@ out vec4 out_color;
 
 in vec2 in_tex;
 layout (binding = 0) uniform sampler2D uni_texture;
+// layout (binding = 1) uniform sampler2D uni_mask;
 
 // rainbow the density output
 vec3 rainbow(float level)

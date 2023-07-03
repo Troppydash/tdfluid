@@ -8,7 +8,7 @@
 // in uint gl_LocalInvocationIndex;
 
 // a workgroup for each pixel
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 // the velocity field
 layout (binding = 0, rg32f) uniform image2D uni_velocity;
@@ -61,7 +61,6 @@ void main()
     float target_pressure = bottom_pressure + (top_pressure - bottom_pressure) * delta.y;
 
     imageStore(uni_pressure_buffer, ij, vec4(target_pressure, 0.0, 0.0, 0.0));
-    //imageStore(uni_pressure_buffer, ij, imageLoad(uni_pressure, base));
 
 
     // set inverse velocity
@@ -75,7 +74,6 @@ void main()
     vec2 target_velocity = bottom_velocity + (top_velocity - bottom_velocity) * delta.y;
 
     imageStore(uni_velocity_buffer, ij, vec4(-target_velocity, 0.0, 0.0));
-    //imageStore(uni_velocity_buffer, ij, -imageLoad(uni_velocity, base));
 
     // set zero density
     imageStore(uni_density, ij, vec4(0.0, 0.0, 0.0, 0.0));

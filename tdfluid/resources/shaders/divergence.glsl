@@ -8,7 +8,7 @@
 // in uint gl_LocalInvocationIndex;
 
 // a workgroup for each pixel
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 // the divergence output buffer
 layout (binding = 0, r32f) uniform image2D uni_buffer;
@@ -35,6 +35,6 @@ void main()
     float vert = imageLoad(uni_field_V, ivec2(i,j+1)).g - imageLoad(uni_field_V, ivec2(i,j-1)).g;
 
     float div = hori + vert;
-    imageStore(uni_buffer, ij, vec4(div, 0.0, 0.0, 0.0));
+    imageStore(uni_buffer, ij, vec4(-div * 1.1, 0.0, 0.0, 0.0));
 }
 

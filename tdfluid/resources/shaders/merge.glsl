@@ -8,7 +8,7 @@
 // in uint gl_LocalInvocationIndex;
 
 // a workgroup for each pixel
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 // the field to copy from
 layout (binding = 0, r32f) uniform image2D uni_from;
@@ -21,9 +21,7 @@ void main()
     ivec2 ij = ivec2(gl_GlobalInvocationID.xy);
 
     float value = imageLoad(uni_from, ij).r;
-    if (value > 0.01)
-    {
-        imageStore(uni_to, ij, vec4(value, 0.0, 0.0, 0.0));
-    }
+    float val2 = imageLoad(uni_to, ij).r;
+    imageStore(uni_to, ij, vec4(value + val2, 0.0, 0.0, 0.0));
 }
 

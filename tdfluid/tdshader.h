@@ -208,6 +208,11 @@ namespace td
 			glDeleteShader(shader);
 		}
 
+		void set_local_scale(int scale)
+		{
+			m_local_scale = scale;
+		}
+
 		void use() const override
 		{
 			glUseProgram(m_program);
@@ -220,12 +225,13 @@ namespace td
 
 		void execute()
 		{
-			glDispatchCompute(m_width, m_height, 1);
+			glDispatchCompute(m_width / m_local_scale, m_height / m_local_scale, 1);
 			glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		}
 
 	private:
 		int m_width = -1;
 		int m_height = -1;
+		int m_local_scale = 32;
 	};
 }
