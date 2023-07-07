@@ -9,7 +9,7 @@
 #include "tdtexture.h"
 #include "tdmeshes.h"
 
-
+#include <stb_perlin.h>
 
 namespace td
 {
@@ -169,9 +169,9 @@ namespace td
 				{
 					float value = 0.0f;
 					if (abs(y - 256.0) <= 10.0 && x < 5.0f)
-						value = 1.7f;
+						value = 0.8f;
 					if (abs(x - 256.0) <= 10.0 && y < 5.0f)
-						value = 1.5f;
+						value = 0.8f;
 					buffer.push_back(value);
 				}
 			}
@@ -186,13 +186,13 @@ namespace td
 				{
 					if (abs(y - 256.0f) < 5.0f && x < 50.0f)
 					{
-						buffer.push_back(700.0f);
+						buffer.push_back(500.0f);
 						buffer.push_back(0.0f);
 					}
 					else if (abs(x - 256.0f) < 5.0f && y < 50.0f)
 					{
 						buffer.push_back(0.0f);
-						buffer.push_back(700.0f);
+						buffer.push_back(500.0f);
 					}
 					else
 					{
@@ -203,6 +203,33 @@ namespace td
 			}
 			m_velocity.upload_rg32f(buffer);
 			m_velocity_source.upload_rg32f(buffer);
+
+			// compute curl noise velocity field
+			buffer.clear();
+			for (int y = 0; y < m_height; ++y)
+			{
+				for (int x = 0; x < m_width; ++x)
+				{
+					const float z = 0.0f;
+					const float lac = 2.0f;
+					const float gain = 0.5f;
+					const int octaves = 6;
+
+					float sample_x = (float)x / 100.0f;
+					float sample_y = (float)y / 100.0f;
+					float h = 0.01f;
+					float value = stb_perlin_turbulence_noise3(sample_x, sample_y, z, lac, gain, octaves);
+					float valuex = stb_perlin_turbulence_noise3(sample_x+h, sample_y, z, lac, gain, octaves);
+					float valuey = stb_perlin_turbulence_noise3(sample_x, sample_y+h, z, lac, gain, octaves);
+
+					// estimate gradient
+					float dx = (valuex - value) / h;
+					float dy = (valuey - value) / h;
+					buffer.push_back(100.0f * dx);
+					buffer.push_back(100.0f * dy);
+				}
+			}
+			m_velocity.upload_rg32f(buffer);
 
 
 			// static boundaries
@@ -429,7 +456,7 @@ namespace td
 		int m_width = 512;
 		int m_height = 512;
 
-		float m_diffusion_rate = 200.0f;
+		float m_diffusion_rate = 0.0f;
 
 		// objects
 		std::vector<td::fluid_static_boundary *> m_objects;

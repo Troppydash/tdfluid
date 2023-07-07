@@ -23,7 +23,7 @@ void main()
     float mask = texture(uni_mask, in_tex).r;
     if (mask > 0.5)
     {
-        out_color = vec4(1.0, 1.0, 1.0, 1.0);
+        out_color = vec4(30.0/255.0, 138.0/255.0, 129.0/255.0, 1.0);
         return;
     }
 
